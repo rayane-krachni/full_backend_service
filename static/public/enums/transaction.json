@@ -1,0 +1,8 @@
+{
+  "transactions": [
+    { "label": "consultation", "value": "consultation" },
+    { "label": "home-care", "value": "home-care" },
+    { "label": "withdrawal", "value": "withdrawal" },
+    { "label": "refund", "value": "refund" }
+  ]
+}

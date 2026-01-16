@@ -1,0 +1,34 @@
+{
+    "measurements": [
+        {
+            "key": "bloodPressure",
+            "label": "Blood Pressure",
+            "type": "String",
+            "unit": "mmHg"
+        },
+        {
+            "key": "weight",
+            "label": "Weight",
+            "type": "Number",
+            "unit": "kg"
+        },
+        {
+            "key": "sugarLevel",
+            "label": "Sugar Level",
+            "type": "String",
+            "unit": "mg/dL"
+        },
+        {
+            "key": "height",
+            "label": "Height",
+            "type": "Number",
+            "unit": "cm"
+        },
+        {
+            "key": "temperature",
+            "label": "Temperature",
+            "type": "Number",
+            "unit": "°C"
+        }
+    ]
+}

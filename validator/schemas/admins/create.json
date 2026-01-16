@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "email": { "type": "string" },
+    "name": { "type": "string" },
+    "role": { "type": "string" }
+  },
+  "required": ["email", "name", "role"],
+  "additionalProperties": false
+}

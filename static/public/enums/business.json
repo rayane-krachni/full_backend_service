@@ -1,0 +1,9 @@
+{
+  "businesses": [
+    { "label": "CABINET", "value": "CABINET" },
+    { "label": "HOSPITAL", "value": "HOSPITAL"},
+    { "label": "CLINIC", "value": "CLINIC"},
+    { "label": "PRIVATE PRACTICE", "value": "PRIVATE_PRACTICE"},
+    { "label": "ORGANIZATION", "value": "ORGANIZATION"}
+  ]
+}

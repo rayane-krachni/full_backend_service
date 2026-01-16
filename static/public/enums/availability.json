@@ -1,0 +1,11 @@
+{
+  "availabilities": [
+    { "label": "SAT", "value": "SAT" },
+    { "label": "SUN", "value": "SUN"},
+    { "label": "MON", "value": "MON"},
+    { "label": "TUE", "value": "TUE"},
+    { "label": "WED", "value": "WED"},
+    { "label": "THU", "value": "THU"},
+    { "label": "FRI", "value": "FRI"}
+  ]
+}

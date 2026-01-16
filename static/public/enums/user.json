@@ -1,0 +1,19 @@
+{
+  "gender": [
+    { "value": "MALE", "label": "Homme" },
+    { "value": "FEMALE", "label": "Femme" },
+    { "value": "OTHER", "label": "Autre" }
+  ],
+  "type": [
+    { "value": "DOCTOR", "label": "Médecin" },
+    { "value": "PATIENT", "label": "Patient" },
+    { "value": "NURSE", "label": "Infirmier/Infirmière" }
+  ],
+  "familyMembers": [
+    { "value": "PRIMARY", "label": "Titulaire" },
+    { "value": "SPOUSE", "label": "Conjoint(e)" },
+    { "value": "CHILD", "label": "Enfant" },
+    { "value": "PARENT", "label": "Parent" },
+    { "value": "OTHER", "label": "Autre" }
+  ]
+}

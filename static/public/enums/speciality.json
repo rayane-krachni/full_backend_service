@@ -1,0 +1,9 @@
+{
+  "specialities": [
+    { "label": "MEDICAL", "value": "MEDICAL" },
+    { "label": "SURGICAL", "value": "SURGICAL" },
+    { "label": "DIAGNOSTIC", "value": "DIAGNOSTIC" },
+    { "label": "NURSING", "value": "NURSING" },
+    { "label": "OTHER", "value": "OTHER" }
+  ]
+}

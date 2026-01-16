@@ -1,0 +1,49 @@
+{
+    "type": "object",
+    "properties": {
+      "name": { "type": "string" },
+      "number": { "type": "string" },
+      "type": { "type": "string" },
+      "address": { "type": "string" },
+      "reader": { "type": "string" },
+      "date": { "type": "string", "format": "date" },
+      "command": { "type": "string" },
+      "user": { "type": "string" },
+      "measurements": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "properties": {
+            "etage": { "type": "string" },
+            "lieu": { "type": "string" },
+            "repere": { "type": "string" },
+            "qte": { "type": "number", "minimum": 1 },
+            "tringle": { "type": "string" },
+            "l": { "type": "string" },
+            "gcn": { "type": "string" },
+            "pp": { "type": "string" },
+            "pn": { "type": "string" },
+            "pf": { "type": "string" },
+            "pj": { "type": "string" },
+            "lp": { "type": "string" },
+            "voilage": { "type": "string" },
+            "ps": { "type": "string" },
+            "obscur": { "type": "string" },
+            "occult": { "type": "string" },
+            "hsp": { "type": "string" },
+            "allege": { "type": "string" },
+            "empty": { "type": "string" },
+            "gcn2": { "type": "string" },
+            "om": { "type": "string" },
+            "comment": { "type": "string" }
+          },
+          "required": ["etage", "lieu", "repere", "qte", "tringle"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["name", "number", "type", "address", "reader", "date", "measurements"],
+    "additionalProperties": false
+  }
+  
