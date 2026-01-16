@@ -1,0 +1,6 @@
+{
+  "role": [
+    { "value": "ADMIN", "label": "Admin" },
+    { "value": "EDITOR", "label": "Rédacteur" }
+  ]
+}

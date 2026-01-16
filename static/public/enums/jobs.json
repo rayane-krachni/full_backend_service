@@ -1,0 +1,7 @@
+{
+    "job": [
+      { "value": "DOCTOR", "label": "DOCTOR" },
+      { "value": "NURSE", "label": "NURSE" }
+    ]
+  }
+  

@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "properties": {
+    "coach": { "type": "string" }
+  },
+  "required": ["coach"],
+  "additionalProperties": false
+}
