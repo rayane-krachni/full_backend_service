@@ -119,6 +119,10 @@ typings/
 
 # dotenv environment variables file
 .env
+.env*
+*.json
+data/static/private/
+
 
 # next.js build output
 .next
