@@ -10,8 +10,8 @@ const serviceAccount = require(
   path.join(
     __dirname,
     "..",
-    "data",
-    "static",
+    //"data",
+    // "static",
     // "private",
     //"spiritualcandle.json"
   ),
