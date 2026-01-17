@@ -12,7 +12,7 @@ const serviceAccount = require(
     "..",
     "data",
     "static",
-    "private",
+    // "private",
     //"spiritualcandle.json"
   ),
 );
