@@ -6,14 +6,16 @@ const admin = require("firebase-admin");
 const path = require("path");
 
 // Initialize Firebase Admin SDK
-const serviceAccount = require(path.join(
-  __dirname,
-  "..",
-  "data",
-  "static",
-  "private",
-  "spiritualcandle.json"
-));
+const serviceAccount = require(
+  path.join(
+    __dirname,
+    "..",
+    "data",
+    "static",
+    "private",
+    //"spiritualcandle.json"
+  ),
+);
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -199,9 +201,9 @@ const sendPushNotification = async (userId, title, message, data = {}) => {
   try {
     // Get user's Firebase token
     const user = await User.findById(userId).select(
-      "firebaseToken preferredLanguage"
+      "firebaseToken preferredLanguage",
     );
-    console.log(userId)
+    console.log(userId);
     if (!user || !user.firebaseToken) {
       console.log(`No Firebase token found for user: ${userId}`);
       return null;
@@ -212,14 +214,14 @@ const sendPushNotification = async (userId, title, message, data = {}) => {
 
     // Handle both string and object title/message parameters
     let finalTitle, finalMessage;
-    
-    if (typeof title === 'string') {
+
+    if (typeof title === "string") {
       finalTitle = title;
     } else {
       finalTitle = title[lang] || title.fr || title.en;
     }
-    
-    if (typeof message === 'string') {
+
+    if (typeof message === "string") {
       finalMessage = message;
     } else {
       finalMessage = message[lang] || message.fr || message.en;
@@ -247,7 +249,7 @@ const sendPushNotification = async (userId, title, message, data = {}) => {
         },
       },
     };
-    console.log(fcmMessage)
+    console.log(fcmMessage);
 
     // Send notification
     const response = await messaging.send(fcmMessage);
@@ -268,10 +270,10 @@ const sendPushNotification = async (userId, title, message, data = {}) => {
  */
 const createAndSend = async (notificationData) => {
   try {
-    console.log(notificationData.userId)
+    console.log(notificationData.userId);
     // Get user's preferred language
     const user = await User.findById(notificationData.userId).select(
-      "language"
+      "language",
     );
     const userLanguage = user?.language || "en";
 
@@ -308,7 +310,7 @@ const createAndSend = async (notificationData) => {
         docType: notificationData.docType,
         action: notificationData.action,
         notificationId: notification._id.toString(),
-      }
+      },
     );
 
     return notification;
@@ -323,7 +325,7 @@ const createAndSend = async (notificationData) => {
  */
 const getUserNotifications = async (
   userId,
-  { page = 1, limit = 20, unreadOnly = false } = {}
+  { page = 1, limit = 20, unreadOnly = false } = {},
 ) => {
   try {
     // Get user's preferred language
@@ -409,7 +411,7 @@ const markAsRead = async (notificationId, userId) => {
     const notification = await Notification.findOneAndUpdate(
       { _id: notificationId, userId, isDeleted: false },
       { isRead: true, readAt: new Date() },
-      { new: true }
+      { new: true },
     );
 
     if (!notification) {
@@ -430,7 +432,7 @@ const markAllAsRead = async (userId) => {
   try {
     const result = await Notification.updateMany(
       { userId, isRead: false, isDeleted: false },
-      { isRead: true, readAt: new Date() }
+      { isRead: true, readAt: new Date() },
     );
 
     return result;
@@ -448,7 +450,7 @@ const deleteNotification = async (notificationId, userId) => {
     const notification = await Notification.findOneAndUpdate(
       { _id: notificationId, userId },
       { isDeleted: true },
-      { new: true }
+      { new: true },
     );
 
     if (!notification) {
