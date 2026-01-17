@@ -137,4 +137,4 @@ data/static/private/
 # .tmp
 
 #data files
-# data
+# datadata/static/private/*.json
