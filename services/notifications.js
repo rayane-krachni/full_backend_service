@@ -1,21 +1,24 @@
-const { default: mongoose } = require("mongoose");
-const { RecordNotFoundError, DataValidationError } = require("../exceptions");
+const mongoose = require("mongoose");
+const { RecordNotFoundError } = require("../exceptions");
 const Notification = require("../models/notification");
 const { User } = require("../models/user");
 const admin = require("firebase-admin");
-const path = require("path");
 
-// Initialize Firebase Admin SDK
-const serviceAccount = require(
-  path.join(
-    __dirname,
-    "..",
-    //"data",
-    // "static",
-    // "private",
-    //"spiritualcandle.json"
-  ),
-);
+/* =========================
+   FIREBASE INIT (ENV ONLY)
+========================= */
+
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT is not defined");
+}
+
+let serviceAccount;
+
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} catch (err) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT is not valid JSON");
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -26,7 +29,10 @@ if (!admin.apps.length) {
 
 const messaging = admin.messaging();
 
-// Notification message templates
+/* =========================
+   NOTIFICATION TEMPLATES
+========================= */
+
 const NOTIFICATION_TEMPLATES = {
   APPOINTMENT_CREATED: {
     title: {
@@ -88,380 +94,149 @@ const NOTIFICATION_TEMPLATES = {
       fr: "Votre rendez-vous a été terminé",
     },
   },
-  APPOINTMENT_DOCTOR_ASSIGNED: {
-    title: {
-      en: "New Appointment Assigned",
-      ar: "تم تعيين موعد جديد",
-      fr: "Nouveau rendez-vous assigné",
-    },
-    message: {
-      en: "You have been assigned a new appointment",
-      ar: "تم تعيين موعد جديد لك",
-      fr: "Un nouveau rendez-vous vous a été assigné",
-    },
-  },
-  APPOINTMENT_NEXT_PATIENT: {
-    title: {
-      en: "Next Appointment",
-      ar: "الموعد التالي",
-      fr: "Prochain rendez-vous",
-    },
-    message: {
-      en: "You have an upcoming appointment",
-      ar: "لديك موعد قادم",
-      fr: "Vous avez un rendez-vous à venir",
-    },
-  },
   MESSAGE_RECEIVED: {
-    title: {
-      en: "New Message",
-      ar: "رسالة جديدة",
-      fr: "Nouveau message",
-    },
+    title: { en: "New Message", ar: "رسالة جديدة", fr: "Nouveau message" },
     message: {
       en: "You have received a new message",
       ar: "لقد تلقيت رسالة جديدة",
       fr: "Vous avez reçu un nouveau message",
     },
   },
-  WITHDRAWAL_APPROVED: {
-    title: {
-      en: "Withdrawal Approved",
-      ar: "تم الموافقة على السحب",
-      fr: "Retrait approuvé",
-    },
-    message: {
-      en: "Your withdrawal request has been approved and is being processed",
-      ar: "تم الموافقة على طلب السحب الخاص بك وهو قيد المعالجة",
-      fr: "Votre demande de retrait a été approuvée et est en cours de traitement",
-    },
-  },
-  WITHDRAWAL_PROCESSED: {
-    title: {
-      en: "Withdrawal Processed",
-      ar: "تم معالجة السحب",
-      fr: "Retrait traité",
-    },
-    message: {
-      en: "Your money has been released and transferred",
-      ar: "تم تحرير أموالك وتحويلها",
-      fr: "Votre argent a été libéré et transféré",
-    },
-  },
-  SOS_ALERT: {
-    title: {
-      en: "SOS Alert",
-      ar: "تنبيه SOS",
-      fr: "Alerte SOS",
-    },
-    message: {
-      en: "Emergency alert received from an employee",
-      ar: "تنبيه طوارئ من موظف",
-      fr: "Alerte d'urgence reçue d'un employé",
-    },
-  },
 };
 
-/**
- * Create and save a notification
- */
+/* =========================
+   CORE FUNCTIONS
+========================= */
+
 const create = async (notificationData) => {
-  try {
-    const { userId, docId, docType, action, metadata = {} } = notificationData;
+  const { userId, docId, docType, action, metadata = {} } = notificationData;
 
-    // Get notification template
-    const template = NOTIFICATION_TEMPLATES[action];
-    if (!template) {
-      throw new Error(`No template found for action: ${action}`);
-    }
-
-    // Create notification
-    const notification = new Notification({
-      userId,
-      docId,
-      docType,
-      action,
-      title: template.title,
-      message: template.message,
-      metadata,
-    });
-
-    await notification.save();
-    return notification;
-  } catch (error) {
-    console.error("Create notification error:", error);
-    throw error;
+  const template = NOTIFICATION_TEMPLATES[action];
+  if (!template) {
+    throw new Error(`No template found for action: ${action}`);
   }
+
+  const notification = new Notification({
+    userId,
+    docId,
+    docType,
+    action,
+    title: template.title,
+    message: template.message,
+    metadata,
+  });
+
+  await notification.save();
+  return notification;
 };
 
-/**
- * Send push notification via Firebase FCM
- */
 const sendPushNotification = async (userId, title, message, data = {}) => {
-  try {
-    // Get user's Firebase token
-    const user = await User.findById(userId).select(
-      "firebaseToken preferredLanguage",
-    );
-    console.log(userId);
-    if (!user || !user.firebaseToken) {
-      console.log(`No Firebase token found for user: ${userId}`);
-      return null;
-    }
+  const user = await User.findById(userId).select(
+    "firebaseToken preferredLanguage",
+  );
 
-    // Get user's preferred language or default to English
-    const lang = user.preferredLanguage || "en";
+  if (!user || !user.firebaseToken) return null;
 
-    // Handle both string and object title/message parameters
-    let finalTitle, finalMessage;
+  const lang = user.preferredLanguage || "en";
 
-    if (typeof title === "string") {
-      finalTitle = title;
-    } else {
-      finalTitle = title[lang] || title.fr || title.en;
-    }
+  const finalTitle =
+    typeof title === "string" ? title : title[lang] || title.en;
+  const finalMessage =
+    typeof message === "string" ? message : message[lang] || message.en;
 
-    if (typeof message === "string") {
-      finalMessage = message;
-    } else {
-      finalMessage = message[lang] || message.fr || message.en;
-    }
+  const fcmMessage = {
+    token: user.firebaseToken,
+    notification: {
+      title: finalTitle,
+      body: finalMessage,
+    },
+    data: {
+      ...data,
+      userId: userId.toString(),
+    },
+    android: { priority: "high" },
+    apns: { payload: { aps: { sound: "default" } } },
+  };
 
-    // Prepare FCM message
-    const fcmMessage = {
-      token: user.firebaseToken,
-      notification: {
-        title: finalTitle,
-        body: finalMessage,
-      },
-      data: {
-        ...data,
-        userId: userId.toString(),
-      },
-      android: {
-        priority: "high",
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "default",
-          },
-        },
-      },
-    };
-    console.log(fcmMessage);
-
-    // Send notification
-    const response = await messaging.send(fcmMessage);
-    console.log("Successfully sent message:", response);
-    return response;
-  } catch (error) {
-    console.error("Error sending push notification:", error);
-    if (error.code === "messaging/registration-token-not-registered") {
-      // Token is invalid, remove it from user
-      await User.findByIdAndUpdate(userId, { $unset: { firebaseToken: 1 } });
-    }
-    throw error;
-  }
+  return messaging.send(fcmMessage);
 };
 
-/**
- * Create notification and send push notification
- */
 const createAndSend = async (notificationData) => {
-  try {
-    console.log(notificationData.userId);
-    // Get user's preferred language
-    const user = await User.findById(notificationData.userId).select(
-      "language",
-    );
-    const userLanguage = user?.language || "en";
+  const user = await User.findById(notificationData.userId).select("language");
+  const lang = user?.language || "en";
 
-    // Get template and localize title/message
-    const template = NOTIFICATION_TEMPLATES[notificationData.action];
-    const localizedTitle = template.title[userLanguage] || template.title.en;
-    const localizedMessage =
-      template.message[userLanguage] || template.message.en;
+  const template = NOTIFICATION_TEMPLATES[notificationData.action];
 
-    // Create notification with localized content
-    const localizedNotificationData = {
-      ...notificationData,
-      title: {
-        en: localizedTitle,
-        ar: localizedTitle,
-        fr: localizedTitle,
-      },
-      message: {
-        en: localizedMessage,
-        ar: localizedMessage,
-        fr: localizedMessage,
-      },
-    };
+  const title = template.title[lang] || template.title.en;
+  const message = template.message[lang] || template.message.en;
 
-    const notification = await create(localizedNotificationData);
+  const notification = await create(notificationData);
 
-    // Send push notification with localized content
-    await sendPushNotification(
-      notificationData.userId,
-      localizedTitle,
-      localizedMessage,
-      {
-        docId: notificationData.docId.toString(),
-        docType: notificationData.docType,
-        action: notificationData.action,
-        notificationId: notification._id.toString(),
-      },
-    );
+  await sendPushNotification(notificationData.userId, title, message, {
+    docId: notificationData.docId.toString(),
+    docType: notificationData.docType,
+    action: notificationData.action,
+    notificationId: notification._id.toString(),
+  });
 
-    return notification;
-  } catch (error) {
-    console.error("Create and send notification error:", error);
-    throw error;
-  }
+  return notification;
 };
 
-/**
- * Get user notifications with pagination
- */
-const getUserNotifications = async (
-  userId,
-  { page = 1, limit = 20, unreadOnly = false } = {},
-) => {
-  try {
-    // Get user's preferred language
-    const user = await User.findById(userId).select("language");
-    const userLanguage = user?.language || "en";
+const getUserNotifications = async (userId, { page = 1, limit = 20 } = {}) => {
+  const skip = (page - 1) * limit;
 
-    const skip = (page - 1) * limit;
-    const filter = {
-      userId,
-      isDeleted: false,
-    };
+  const notifications = await Notification.find({ userId, isDeleted: false })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
-    if (unreadOnly) {
-      filter.isRead = false;
-    }
+  const total = await Notification.countDocuments({ userId, isDeleted: false });
 
-    const notifications = await Notification.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    // Localize notifications based on user's language
-    const localizedNotifications = notifications.map((notification) => {
-      let localizedTitle = notification.title;
-      let localizedMessage = notification.message;
-
-      // If title/message are objects with language keys, extract the user's language
-      if (
-        typeof notification.title === "object" &&
-        notification.title !== null
-      ) {
-        localizedTitle =
-          notification.title[userLanguage] ||
-          notification.title.en ||
-          notification.title;
-      }
-      if (
-        typeof notification.message === "object" &&
-        notification.message !== null
-      ) {
-        localizedMessage =
-          notification.message[userLanguage] ||
-          notification.message.en ||
-          notification.message;
-      }
-
-      return {
-        ...notification,
-        title: localizedTitle,
-        message: localizedMessage,
-      };
-    });
-
-    const total = await Notification.countDocuments(filter);
-    const unreadCount = await Notification.countDocuments({
-      userId,
-      isRead: false,
-      isDeleted: false,
-    });
-
-    return {
-      notifications: localizedNotifications,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-      unreadCount,
-    };
-  } catch (error) {
-    console.error("Get user notifications error:", error);
-    throw error;
-  }
+  return {
+    notifications,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  };
 };
 
-/**
- * Mark notification as read
- */
 const markAsRead = async (notificationId, userId) => {
-  try {
-    const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, userId, isDeleted: false },
-      { isRead: true, readAt: new Date() },
-      { new: true },
-    );
+  const notification = await Notification.findOneAndUpdate(
+    { _id: notificationId, userId, isDeleted: false },
+    { isRead: true, readAt: new Date() },
+    { new: true },
+  );
 
-    if (!notification) {
-      throw new RecordNotFoundError(Notification, "_id", notificationId);
-    }
-
-    return notification;
-  } catch (error) {
-    console.error("Mark notification as read error:", error);
-    throw error;
+  if (!notification) {
+    throw new RecordNotFoundError(Notification, "_id", notificationId);
   }
+
+  return notification;
 };
 
-/**
- * Mark all user notifications as read
- */
 const markAllAsRead = async (userId) => {
-  try {
-    const result = await Notification.updateMany(
-      { userId, isRead: false, isDeleted: false },
-      { isRead: true, readAt: new Date() },
-    );
-
-    return result;
-  } catch (error) {
-    console.error("Mark all notifications as read error:", error);
-    throw error;
-  }
+  return Notification.updateMany(
+    { userId, isRead: false, isDeleted: false },
+    { isRead: true, readAt: new Date() },
+  );
 };
 
-/**
- * Delete notification
- */
 const deleteNotification = async (notificationId, userId) => {
-  try {
-    const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, userId },
-      { isDeleted: true },
-      { new: true },
-    );
+  const notification = await Notification.findOneAndUpdate(
+    { _id: notificationId, userId },
+    { isDeleted: true },
+    { new: true },
+  );
 
-    if (!notification) {
-      throw new RecordNotFoundError(Notification, "_id", notificationId);
-    }
-
-    return notification;
-  } catch (error) {
-    console.error("Delete notification error:", error);
-    throw error;
+  if (!notification) {
+    throw new RecordNotFoundError(Notification, "_id", notificationId);
   }
+
+  return notification;
 };
 
 module.exports = {
